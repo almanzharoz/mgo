@@ -2055,15 +2055,18 @@ func (s *Session) Clone() *Session {
 
 // Close terminates the session.  It's a runtime error to use a session
 // after it has been closed.
-func (s *Session) Close() {
+func (s *Session) Close() bool {
 	s.m.Lock()
 	if s.mgoCluster != nil {
 		debugf("Closing session %p", s)
 		s.unsetSocket()
 		s.mgoCluster.Release()
 		s.mgoCluster = nil
+		s.m.Unlock()
+		return true
 	}
 	s.m.Unlock()
+	return false
 }
 
 func (s *Session) cluster() *mongoCluster {
@@ -2911,7 +2914,6 @@ func (p *Pipe) SetMaxTime(d time.Duration) *Pipe {
 	p.maxTimeMS = int64(d / time.Millisecond)
 	return p
 }
-
 
 // Collation allows to specify language-specific rules for string comparison,
 // such as rules for lettercase and accent marks.
